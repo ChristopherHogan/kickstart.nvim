@@ -123,7 +123,7 @@ local function cjh_increment_z_cycle()
 end
 
 vim.keymap.set('n', '<C-l>', cjh_increment_z_cycle, { desc = 'Cycle through zt, zz, zb' })
-vim.keymap.set('n', '<leader>qq', '<cmd>q<CR>', { desc = 'Quit nvim' })
+vim.keymap.set('n', '<leader>qq', '<cmd>qa<CR>', { desc = 'Quit nvim' })
 
 -- Comma leader
 vim.keymap.set('n', ',w', '<cmd>w<CR>', { desc = 'Save buffer' })
@@ -201,43 +201,6 @@ vim.api.nvim_create_autocmd('TextYankPost', {
     vim.highlight.on_yank()
   end,
 })
-
--- Color palette
-local cjh_palette = {
-  polar_night = {
-    origin = "#2E3440", -- nord0
-    bright = "#3B4252", -- nord1
-    brighter = "#434C5E", -- nord2
-    brightest = "#4C566A", -- nord3
-    light = "#616E88", -- out of palette
-  },
-  snow_storm = {
-    origin = "#D8DEE9", -- nord4
-    brighter = "#E5E9F0", -- nord5
-    brightest = "#ECEFF4", -- nord6
-  },
-  frost = {
-    polar_water = "#8FBCBB", -- nord7
-    ice = "#88C0D0", -- nord8
-    artic_water = "#81A1C1", -- nord9
-    artic_ocean = "#5E81AC", -- nord10
-  },
-  aurora = {
-    red = "#BF616A", -- nord11
-    orange = "#D08770", -- nord12
-    yellow = "#EBCB8B", -- nord13
-    green = "#A3BE8C", -- nord14
-    purple = "#B48EAD", -- nord15
-  },
-}
-
-vim.cmd.colorscheme("retrobox")
-vim.api.nvim_set_hl(0, "Keyword", {fg = cjh_palette.frost.ice})
-vim.api.nvim_set_hl(0, "Delimiter", {fg = cjh_palette.frost.ice})
-vim.api.nvim_set_hl(0, "StorageClass", {fg = cjh_palette.frost.artic_ocean})
-vim.api.nvim_set_hl(0, "Special", {fg = cjh_palette.frost.ice})
-vim.api.nvim_set_hl(0, "Function", {fg = cjh_palette.aurora.yellow})
-vim.api.nvim_set_hl(0, "Keyword", {fg = cjh_palette.aurora.red})
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
@@ -581,7 +544,9 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
+        clangd = {
+          cmd = {"clangd-15"},
+        },
         -- gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
@@ -788,50 +753,45 @@ require('lazy').setup({
       }
     end,
   },
+  {
+    "gbprod/nord.nvim",
+    lazy = false,
+    priority = 1000,
+    config = function()
+      require("nord").setup({
+        styles = { comments = { italic = false }},
+        on_highlights = function(highlights, colors)
+          highlights["@function"] = {fg = colors.aurora.yellow, bold = true}
+          highlights["@function.call"] = {fg = colors.aurora.yellow}
+          highlights["@lsp.typemod.function.defaultLibrary"] = {fg = colors.frost.ice}
+          highlights["@type"] = {fg = colors.aurora.red, bold = true}
+          highlights["@type.builtin"] = {fg = colors.frost.artic_ocean, bold = true}
+          highlights["@lsp.type.type"] = {link = "@type.builtin"}
+          highlights["@boolean"] = {fg = colors.aurora.purple}
+          highlights["@lsp.type.macro"] = {fg = colors.frost.polar_water}
+          highlights["@lsp.typemod.property.declaration.cpp"] = {fg = colors.frost.ice}
+          highlights["@keyword.import"] = {fg = colors.aurora.purple}
+          highlights["@keyword.directive"] = {fg = colors.aurora.purple}
+          highlights["@keyword.directive.define"] = {fg = colors.aurora.purple}
+          highlights["@keyword.type"] = {fg = colors.frost.artic_water, bold = true}
+          highlights["@keyword.modifier"] = {fg = colors.frost.artic_water, bold = true}
+          highlights["@keyword.repeat"] = {fg = colors.frost.artic_water, bold = true}
+          highlights["@keyword.conditional"] = {fg = colors.frost.artic_water, bold = true}
+          highlights["@keyword.return"] = {fg = colors.frost.artic_water, bold = true}
+          highlights["@constant"] = {fg = colors.frost.polar_water}
+          highlights["@module"] = {fg = colors.aurora.purple}
+          highlights["@variable.parameter"] = {fg = colors.snow_storm.origin}
+          highlights["@variable"] = {fg = colors.snow_storm.brightest}
+          highlights["@punctuation.bracket"] = {fg = colors.aurora.purple}
+        end,
+      })
+      vim.cmd.colorscheme("nord")
+    end,
+  },
   -- {
-  --   "ellisonleao/gruvbox.nvim",
-  --   priority = 1000,
-  --   config = function()
-  --     require("gruvbox").setup({
-  --       italic = {
-  --         strings = false,
-  --         emphasis = false,
-  --         comments = false,
-  --         operators = false,
-  --         folds = false,
-  --       },
-  --       palette_overrides = {
-  --         dark0 = cjh_palette.polar_night.origin,
-  --         dark1 = cjh_palette.polar_night.bright,
-  --         bright_red = cjh_palette.aurora.red,
-  --         bright_orange = cjh_palette.frost.polar_water,
-  --       },
-  --       overrides = {
-  --
-  --       },
-  --     })
-  --     vim.cmd([[colorscheme gruvbox]])
-  --   end,
-  --   -- opts = {},
-  -- },
-  -- {
-  --   "gbprod/nord.nvim",
-  --   lazy = false,
-  --   priority = 1000,
-  --   config = function()
-  --     require("nord").setup({ styles = { comments = { italic = false }}})
-  --     vim.cmd.colorscheme("nord")
-  --   end,
-  -- },
-  -- { -- You can easily change to a different colorscheme.
-  --   -- Change the name of the colorscheme plugin below, and then
-  --   -- change the command in the config to whatever the name of that colorscheme is.
-  --   --
-  --   -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
   --   'folke/tokyonight.nvim',
-  --   priority = 1000, -- Make sure to load this before all the other start plugins.
+  --   priority = 1000,
   --   init = function()
-  --     -- Load the colorscheme here.
   --     -- Like many other themes, this one has different styles, and you could load
   --     -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
   --     vim.cmd.colorscheme 'tokyonight-night'
