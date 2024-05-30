@@ -201,6 +201,16 @@ require('lazy').setup({
         topdelete = { text = '‾' },
         changedelete = { text = '~' },
       },
+      on_attach = function(bufnr)
+        -- if vim.api.nvim_buf_get_name(bufnr):match(<PATTERN>) then
+        --   -- Don't attach to specific buffers whose name matches a pattern
+        --   return false
+        -- end
+
+        -- Setup keymaps
+        vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>gd',
+          '<cmd>lua require"gitsigns".diffthis()<CR>', {desc = '[D]iff'})
+      end,
     },
   },
 
@@ -236,6 +246,7 @@ require('lazy').setup({
         ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
         ['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
         ['<leader>f'] = { name = '[F]iles', _ = 'which_key_ignore' },
+        ['<leader>g'] = { name = '[G]it', _ = 'which_key_ignore' },
         ['<leader>h'] = { name = '[H]elp', _ = 'which_key_ignore' },
         ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
         ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
