@@ -1,79 +1,36 @@
--- Set <space> as the leader key
--- See `:help mapleader`
---  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
-
--- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = false
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
--- NOTE: You can change these options as you wish!
---  For more options, you can see `:help option-list`
+-- See `:help option-list`
 
--- Make line numbers default
-vim.opt.number = true
--- You can also add relative line numbers, to help with jumping.
---  Experiment for yourself to see if you like it!
-vim.opt.relativenumber = true
-
--- Enable mouse mode, can be useful for resizing splits for example!
+vim.opt.number = false
+vim.opt.relativenumber = false
 vim.opt.mouse = 'a'
-
--- Don't show the mode, since it's already in the status line
 vim.opt.showmode = false
-
--- Sync clipboard between OS and Neovim.
---  Remove this option if you want your OS clipboard to remain independent.
---  See `:help 'clipboard'`
 vim.opt.clipboard = 'unnamedplus'
-
--- Enable break indent
--- Wrapped lines are indented at same level as previous line.
 vim.opt.breakindent = true
-
--- Save undo history
 vim.opt.undofile = true
-
--- Case-insensitive searching UNLESS \C or one or more capital letters in the search term
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
-
--- Keep signcolumn on by default
-vim.opt.signcolumn = 'yes'
-
--- Decrease update time
+vim.opt.signcolumn = 'auto'
 vim.opt.updatetime = 250
-
--- Decrease mapped sequence wait time
--- Displays which-key popup sooner
 vim.opt.timeoutlen = 300
-
--- Configure how new splits should be opened
 vim.opt.splitright = true
 vim.opt.splitbelow = true
-
--- Sets how neovim will display certain whitespace characters in the editor.
---  See `:help 'list'`
---  and `:help 'listchars'`
 vim.opt.list = true
 vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
-
--- Preview substitutions live, as you type!
 vim.opt.inccommand = 'split'
-
--- Show which line your cursor is on
 vim.opt.cursorline = true
-
--- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
+vim.opt.hlsearch = true
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
--- Set highlight on search, but clear on pressing <Esc> in normal mode
-vim.opt.hlsearch = true
+-- Clear highlight search by pressing <Esc> in normal mode
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
@@ -90,7 +47,7 @@ vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagn
 -- or just use <C-\><C-n> to exit terminal mode
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
--- Window key binding
+-- Windows
 vim.keymap.set('n', '<leader>wh', '<C-w><C-h>', { desc = 'Move focus to the left window' })
 vim.keymap.set('n', '<leader>wl', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<leader>wj', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
@@ -124,6 +81,23 @@ end
 
 vim.keymap.set('n', '<C-l>', cjh_increment_z_cycle, { desc = 'Cycle through zt, zz, zb' })
 vim.keymap.set('n', '<leader>qq', '<cmd>qa<CR>', { desc = 'Quit nvim' })
+
+vim.keymap.set('n', '[<leader>', 'O<ESC>j', { desc = 'Insert blank line above' })
+vim.keymap.set('n', ']<leader>', 'o<ESC>k', { desc = 'Insert blank line below' })
+
+-- Toggles
+local function cjh_toggle_line_number()
+  vim.opt.number = not(vim.opt.number:get())
+end
+
+local function cjh_toggle_relative_line_number()
+  vim.opt.relativenumber = not(vim.opt.relativenumber:get())
+end
+
+vim.keymap.set('n', '<leader>tn', cjh_toggle_line_number, { desc = 'Toggle line numbers' })
+vim.keymap.set('n', '<leader>tr', cjh_toggle_relative_line_number,
+  { desc = 'Toggle relative line numbers' }
+)
 
 -- Comma leader
 vim.keymap.set('n', ',w', '<cmd>w<CR>', { desc = 'Save buffer' })
@@ -270,10 +244,6 @@ require('lazy').setup({
         -- ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore' },
         ['<leader>q'] = { name = '[Q]uit', _ = 'which_key_ignore' },
       }
-      -- visual mode
-      -- require('which-key').register({
-      --   ['<leader>h'] = { 'Git [H]unk' },
-      -- }, { mode = 'v' })
     end,
   },
 
@@ -404,31 +374,6 @@ require('lazy').setup({
       { 'folke/neodev.nvim', opts = {} },
     },
     config = function()
-      -- Brief aside: **What is LSP?**
-      --
-      -- LSP is an initialism you've probably heard, but might not understand what it is.
-      --
-      -- LSP stands for Language Server Protocol. It's a protocol that helps editors
-      -- and language tooling communicate in a standardized fashion.
-      --
-      -- In general, you have a "server" which is some tool built to understand a particular
-      -- language (such as `gopls`, `lua_ls`, `rust_analyzer`, etc.). These Language Servers
-      -- (sometimes called LSP servers, but that's kind of like ATM Machine) are standalone
-      -- processes that communicate with some "client" - in this case, Neovim!
-      --
-      -- LSP provides Neovim with features like:
-      --  - Go to definition
-      --  - Find references
-      --  - Autocompletion
-      --  - Symbol Search
-      --  - and more!
-      --
-      -- Thus, Language Servers are external tools that must be installed separately from
-      -- Neovim. This is where `mason` and related plugins come into play.
-      --
-      -- If you're wondering about lsp vs treesitter, you can check out the wonderfully
-      -- and elegantly composed help section, `:help lsp-vs-treesitter`
-
       --  This function gets run when an LSP attaches to a particular buffer.
       --    That is to say, every time a new file is opened that is associated with
       --    an lsp (for example, opening `main.rs` is associated with `rust_analyzer`) this
@@ -436,9 +381,6 @@ require('lazy').setup({
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
         callback = function(event)
-          -- NOTE: Remember that Lua is a real programming language, and as such it is possible
-          -- to define small helper and utility functions so you don't have to repeat yourself.
-          --
           -- In this case, we create a function that lets us more easily define mappings specific
           -- for LSP related items. It sets the mode, buffer and description for us each time.
           local map = function(keys, func, desc)
@@ -492,28 +434,28 @@ require('lazy').setup({
           --
           -- When you move your cursor, the highlights will be cleared (the second autocommand).
           local client = vim.lsp.get_client_by_id(event.data.client_id)
-          if client and client.server_capabilities.documentHighlightProvider then
-            local highlight_augroup = vim.api.nvim_create_augroup('kickstart-lsp-highlight', { clear = false })
-            vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
-              buffer = event.buf,
-              group = highlight_augroup,
-              callback = vim.lsp.buf.document_highlight,
-            })
-
-            vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
-              buffer = event.buf,
-              group = highlight_augroup,
-              callback = vim.lsp.buf.clear_references,
-            })
-
-            vim.api.nvim_create_autocmd('LspDetach', {
-              group = vim.api.nvim_create_augroup('kickstart-lsp-detach', { clear = true }),
-              callback = function(event2)
-                vim.lsp.buf.clear_references()
-                vim.api.nvim_clear_autocmds { group = 'kickstart-lsp-highlight', buffer = event2.buf }
-              end,
-            })
-          end
+          -- if client and client.server_capabilities.documentHighlightProvider then
+          --   local highlight_augroup = vim.api.nvim_create_augroup('kickstart-lsp-highlight', { clear = false })
+          --   vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
+          --     buffer = event.buf,
+          --     group = highlight_augroup,
+          --     callback = vim.lsp.buf.document_highlight,
+          --   })
+          --
+          --   vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
+          --     buffer = event.buf,
+          --     group = highlight_augroup,
+          --     callback = vim.lsp.buf.clear_references,
+          --   })
+          --
+          --   vim.api.nvim_create_autocmd('LspDetach', {
+          --     group = vim.api.nvim_create_augroup('kickstart-lsp-detach', { clear = true }),
+          --     callback = function(event2)
+          --       vim.lsp.buf.clear_references()
+          --       vim.api.nvim_clear_autocmds { group = 'kickstart-lsp-highlight', buffer = event2.buf }
+          --     end,
+          --   })
+          -- end
 
           -- The following autocommand is used to enable inlay hints in your
           -- code, if the language server you are using supports them
@@ -761,15 +703,18 @@ require('lazy').setup({
       require("nord").setup({
         styles = { comments = { italic = false }},
         on_highlights = function(highlights, colors)
-          highlights["@function"] = {fg = colors.aurora.yellow, bold = true}
+          -- highlights["@function"] = {fg = colors.aurora.yellow, bold = true}
           highlights["@function.call"] = {fg = colors.aurora.yellow}
-          highlights["@lsp.typemod.function.defaultLibrary"] = {fg = colors.frost.ice}
+          highlights["@lsp.type.function"] = {link = "@function.call"}
+          highlights["@lsp.typemod.function.declaration"] = {fg = colors.aurora.yellow, bold = true}
+          highlights["@lsp.typemod.function.defaultLibrary"] = {fg = colors.aurora.purple}
           highlights["@type"] = {fg = colors.aurora.red, bold = true}
           highlights["@type.builtin"] = {fg = colors.frost.artic_ocean, bold = true}
           highlights["@lsp.type.type"] = {link = "@type.builtin"}
           highlights["@boolean"] = {fg = colors.aurora.purple}
-          highlights["@lsp.type.macro"] = {fg = colors.frost.polar_water}
+          highlights["@lsp.type.macro"] = {fg = colors.frost.polar_water, bold = true}
           highlights["@lsp.typemod.property.declaration.cpp"] = {fg = colors.frost.ice}
+          highlights["@lsp.typemod.parameter.functionScope.cpp"] = {fg = colors.frost.ice}
           highlights["@keyword.import"] = {fg = colors.aurora.purple}
           highlights["@keyword.directive"] = {fg = colors.aurora.purple}
           highlights["@keyword.directive.define"] = {fg = colors.aurora.purple}
@@ -783,6 +728,11 @@ require('lazy').setup({
           highlights["@variable.parameter"] = {fg = colors.snow_storm.origin}
           highlights["@variable"] = {fg = colors.snow_storm.brightest}
           highlights["@punctuation.bracket"] = {fg = colors.aurora.purple}
+          highlights["TodoFgTODO"] = {fg = colors.aurora.orange, bold = true}
+          highlights["TodoFgNOTE"] = {fg = colors.aurora.green, bold = true}
+          highlights["Visual"] = {bg = colors.polar_night.brightest}
+          highlights["IncSearch"] = {link = "Visual"}
+          highlights["Search"] = {link = "Visual"}
         end,
       })
       vim.cmd.colorscheme("nord")
