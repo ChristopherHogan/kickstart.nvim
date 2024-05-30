@@ -95,9 +95,16 @@ vim.keymap.set('n', '<leader>wh', '<C-w><C-h>', { desc = 'Move focus to the left
 vim.keymap.set('n', '<leader>wl', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<leader>wj', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<leader>wk', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+vim.keymap.set('n', '<leader>w<S-h>', '<C-w>x', { desc = 'Swap with left window' })
+vim.keymap.set('n', '<leader>w<S-l>', '<C-w>x', { desc = 'Swap with right window' })
 vim.keymap.set('n', '<leader>wm', '<C-w>o', { desc = 'Maximize window' })
 vim.keymap.set('n', '<leader>w/', '<C-w>v', { desc = 'Split window vertically' })
 vim.keymap.set('n', '<leader>wd', '<cmd>close<CR>', { desc = 'Close a window' })
+
+-- Buffers
+vim.keymap.set('n', '<leader>bd', '<cmd>bd<CR>', { desc = '[D]elete this buffer' })
+vim.keymap.set('n', '<leader>bn', '<cmd>bnext<CR>', { desc = '[N]ext buffer' })
+vim.keymap.set('n', '<leader>bp', '<cmd>bprev<CR>', { desc = '[P]revious buffer' })
 
 local function cjh_get_z_cycle_incrementer()
   local index = 1
@@ -194,6 +201,43 @@ vim.api.nvim_create_autocmd('TextYankPost', {
     vim.highlight.on_yank()
   end,
 })
+
+-- Color palette
+local cjh_palette = {
+  polar_night = {
+    origin = "#2E3440", -- nord0
+    bright = "#3B4252", -- nord1
+    brighter = "#434C5E", -- nord2
+    brightest = "#4C566A", -- nord3
+    light = "#616E88", -- out of palette
+  },
+  snow_storm = {
+    origin = "#D8DEE9", -- nord4
+    brighter = "#E5E9F0", -- nord5
+    brightest = "#ECEFF4", -- nord6
+  },
+  frost = {
+    polar_water = "#8FBCBB", -- nord7
+    ice = "#88C0D0", -- nord8
+    artic_water = "#81A1C1", -- nord9
+    artic_ocean = "#5E81AC", -- nord10
+  },
+  aurora = {
+    red = "#BF616A", -- nord11
+    orange = "#D08770", -- nord12
+    yellow = "#EBCB8B", -- nord13
+    green = "#A3BE8C", -- nord14
+    purple = "#B48EAD", -- nord15
+  },
+}
+
+vim.cmd.colorscheme("retrobox")
+vim.api.nvim_set_hl(0, "Keyword", {fg = cjh_palette.frost.ice})
+vim.api.nvim_set_hl(0, "Delimiter", {fg = cjh_palette.frost.ice})
+vim.api.nvim_set_hl(0, "StorageClass", {fg = cjh_palette.frost.artic_ocean})
+vim.api.nvim_set_hl(0, "Special", {fg = cjh_palette.frost.ice})
+vim.api.nvim_set_hl(0, "Function", {fg = cjh_palette.aurora.yellow})
+vim.api.nvim_set_hl(0, "Keyword", {fg = cjh_palette.aurora.red})
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
@@ -298,7 +342,7 @@ require('lazy').setup({
       },
       { 'nvim-telescope/telescope-ui-select.nvim' },
 
-      -- Useful for getting pretty icons, but requires a Nerd Font.
+      -- Useful for getting pretty icons, but requires a Nerd Font.lua
       { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
     },
     config = function()
@@ -347,7 +391,7 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>bb', builtin.buffers, { desc = '[S]earch [B]uffers' })
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
-      vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = '[S]earch [F]iles' })
+      vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = '[S]earch [F]iles', hide })
       vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
       vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
@@ -690,9 +734,9 @@ require('lazy').setup({
         -- No, but seriously. Please read `:help ins-completion`, it is really good!
         mapping = cmp.mapping.preset.insert {
           -- Select the [n]ext item
-          ['<C-n>'] = cmp.mapping.select_next_item(),
+          ['<C-j>'] = cmp.mapping.select_next_item(),
           -- Select the [p]revious item
-          ['<C-p>'] = cmp.mapping.select_prev_item(),
+          ['<C-k>'] = cmp.mapping.select_prev_item(),
 
           -- Scroll the documentation window [b]ack / [f]orward
           ['<C-b>'] = cmp.mapping.scroll_docs(-4),
@@ -701,7 +745,7 @@ require('lazy').setup({
           -- Accept ([y]es) the completion.
           --  This will auto-import if your LSP supports it.
           --  This will expand snippets if the LSP sent a snippet.
-          ['<C-y>'] = cmp.mapping.confirm { select = true },
+          ['<CR>'] = cmp.mapping.confirm { select = true },
 
           -- If you prefer more traditional completion keymaps,
           -- you can uncomment the following lines
@@ -744,25 +788,59 @@ require('lazy').setup({
       }
     end,
   },
-
-  -- TODO(chogan): Disable italics on keywords
-  { -- You can easily change to a different colorscheme.
-    -- Change the name of the colorscheme plugin below, and then
-    -- change the command in the config to whatever the name of that colorscheme is.
-    --
-    -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
-    priority = 1000, -- Make sure to load this before all the other start plugins.
-    init = function()
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
-
-      -- You can configure highlights by doing something like:
-      vim.cmd.hi 'Comment gui=none'
-    end,
-  },
+  -- {
+  --   "ellisonleao/gruvbox.nvim",
+  --   priority = 1000,
+  --   config = function()
+  --     require("gruvbox").setup({
+  --       italic = {
+  --         strings = false,
+  --         emphasis = false,
+  --         comments = false,
+  --         operators = false,
+  --         folds = false,
+  --       },
+  --       palette_overrides = {
+  --         dark0 = cjh_palette.polar_night.origin,
+  --         dark1 = cjh_palette.polar_night.bright,
+  --         bright_red = cjh_palette.aurora.red,
+  --         bright_orange = cjh_palette.frost.polar_water,
+  --       },
+  --       overrides = {
+  --
+  --       },
+  --     })
+  --     vim.cmd([[colorscheme gruvbox]])
+  --   end,
+  --   -- opts = {},
+  -- },
+  -- {
+  --   "gbprod/nord.nvim",
+  --   lazy = false,
+  --   priority = 1000,
+  --   config = function()
+  --     require("nord").setup({ styles = { comments = { italic = false }}})
+  --     vim.cmd.colorscheme("nord")
+  --   end,
+  -- },
+  -- { -- You can easily change to a different colorscheme.
+  --   -- Change the name of the colorscheme plugin below, and then
+  --   -- change the command in the config to whatever the name of that colorscheme is.
+  --   --
+  --   -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
+  --   'folke/tokyonight.nvim',
+  --   priority = 1000, -- Make sure to load this before all the other start plugins.
+  --   init = function()
+  --     -- Load the colorscheme here.
+  --     -- Like many other themes, this one has different styles, and you could load
+  --     -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
+  --     vim.cmd.colorscheme 'tokyonight-night'
+  --
+  --     -- You can configure highlights by doing something like:
+  --     vim.cmd.hi 'Comment gui=none'
+  --   end,
+  --   opts = { styles = { keywords = { italic = false } } }
+  -- },
 
   -- Highlight todo, notes, etc in comments
   {
