@@ -30,7 +30,6 @@ vim.opt.hlsearch = true
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
--- Clear highlight search by pressing <Esc> in normal mode
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
@@ -39,12 +38,6 @@ vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagn
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [E]rror messages' })
 -- vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
--- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
--- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
--- is not what someone will guess without a bit more experience.
---
--- NOTE: This won't work in all terminal emulators/tmux/etc. Try your own mapping
--- or just use <C-\><C-n> to exit terminal mode
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
 -- Windows
@@ -85,6 +78,10 @@ vim.keymap.set('n', '<leader>qq', '<cmd>qa<CR>', { desc = 'Quit nvim' })
 vim.keymap.set('n', '[<leader>', 'O<ESC>j', { desc = 'Insert blank line above' })
 vim.keymap.set('n', ']<leader>', 'o<ESC>k', { desc = 'Insert blank line below' })
 
+-- Errors
+-- <leader>en :cnext
+-- <leader>ep :cprevious
+
 -- Toggles
 local function cjh_toggle_line_number()
   vim.opt.number = not(vim.opt.number:get())
@@ -99,17 +96,44 @@ vim.keymap.set('n', '<leader>tr', cjh_toggle_relative_line_number,
   { desc = 'Toggle relative line numbers' }
 )
 
--- Comma leader
-vim.keymap.set('n', ',w', '<cmd>w<CR>', { desc = 'Save buffer' })
--- TODO(chogan): Make sure these auto indent
-vim.keymap.set('n', ',t', 'i-- TODO(chogan): ', { desc = 'Insert TODO' })
+local cjh_build_command = './build.sh'
+local function cjh_request_build_command()
+  local input = vim.fn.input('Build command: ')
+  if not vim.fn.empty(input) ~= 1 then
+    cjh_build_command = input
+    vim.cmd('!' .. cjh_build_command)
+  end
+end
+
+-- TODO(chogan): Comma leader
+vim.keymap.set('n', ',b', function() vim.cmd('!' .. cjh_build_command) end, { desc = '[B]uild' })
+-- vim.keymap.set('n', ',c', 'cjh-insert-if0-comment', { desc = '' })
+-- vim.keymap.set('n', ',fb', 'c-beginning-of-defun', { desc = '' })
+-- vim.keymap.set('n', ',fe', 'c-end-of-defun', { desc = '' })
+-- vim.keymap.set('n', ',g', 'cjh-insert-time-blocks', { desc = '' })
+-- vim.keymap.set('n', ',h', 'ff-find-other-file', { desc = '' })
+-- vim.keymap.set('n', ',H', 'cjh-find-other-file-other-window', { desc = '' })
+-- vim.keymap.set('n', ',m', 'cjh-insert-mpi-breakpoint', { desc = '' })
 vim.keymap.set('n', ',n', 'i-- NOTE(chogan): ', { desc = 'Insert NOTE' })
--- TODO(chogan): ,b
+-- vim.keymap.set('n', ',p', 'org-pomodoro', { desc = '' })
+vim.keymap.set('n', ',r', cjh_request_build_command, { desc = '[R]equest build command' })
+-- TODO(chogan): Make sure this auto indents
+vim.keymap.set('n', ',t', 'i-- TODO(chogan): ', { desc = 'Insert TODO' })
+-- vim.keymap.set('n', ',u', 'org-update-all-dblocks', { desc = '' })
+vim.keymap.set('n', ',w', '<cmd>w<CR>', { desc = 'Save buffer' })
+-- vim.keymap.set('n', '<C-;>', 'cjh-insert-semicolon-at-eol', { desc = '' })
+--
+vim.keymap.set('i', 'C-l', '<ESC>li', { desc = '' })
+vim.keymap.set('i', 'C-h', '<ESC>hi', { desc = '' })
+-- vim.keymap.set('i', 'C-;', 'cjh-insert-semicolon-at-eol', { desc = '' })
+-- vim.keymap.set('i', 'C-.', 'cjh-init-struct', { desc = '' })
 
 -- Help
 local function cjh_help()
-  local input = vim.fn.input('Help subject: ', '', 'help')
-  vim.cmd([[:enew | :set buftype=help | :h ]] .. input)
+  local input = vim.fn.input('Help subject: ')
+  if vim.fn.empty(input) ~= 1 then
+    vim.cmd([[:enew | :set buftype=help | :h ]] .. input)
+  end
 end
 
 vim.api.nvim_create_user_command('CjhHelp', cjh_help, { nargs = 0 })
@@ -162,6 +186,25 @@ vim.api.nvim_create_autocmd('TermOpen', {
   end,
 })
 
+-- Command mode
+vim.keymap.set('c', '<C-j>', '<C-n>', { desc = 'Next entry'})
+vim.keymap.set('c', '<C-k>', '<C-p>', { desc = 'Previous entry'})
+
+-- TODO(chogan): Remap CTRL-X insert mode completion commands (:help ins-completion)
+-- 1. Whole lines						|i_CTRL-X_CTRL-L|
+-- 2. keywords in the current file				|i_CTRL-X_CTRL-N|
+-- 3. keywords in 'dictionary'				|i_CTRL-X_CTRL-K|
+-- 4. keywords in 'thesaurus', thesaurus-style		|i_CTRL-X_CTRL-T|
+-- 5. keywords in the current and included files		|i_CTRL-X_CTRL-I|
+-- 6. tags							|i_CTRL-X_CTRL-]|
+-- 7. file names						|i_CTRL-X_CTRL-F|
+-- 8. definitions or macros				|i_CTRL-X_CTRL-D|
+-- 9. Vim command-line					|i_CTRL-X_CTRL-V|
+-- 10. User defined completion				|i_CTRL-X_CTRL-U|
+-- 11. omni completion					|i_CTRL-X_CTRL-O|
+-- 12. Spelling suggestions				|i_CTRL-X_s|
+-- 13. keywords in 'complete'				|i_CTRL-N| |i_CTRL-P|
+--
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
@@ -208,8 +251,7 @@ require('lazy').setup({
         -- end
 
         -- Setup keymaps
-        vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>gd',
-          '<cmd>lua require"gitsigns".diffthis()<CR>', {desc = '[D]iff'})
+        vim.keymap.set('n', '<leader>gd', require("gitsigns").diffthis, {desc = '[D]iff'})
       end,
     },
   },
