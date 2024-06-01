@@ -1,3 +1,30 @@
+-- TODO(chogan): Add a hook to buffer delete that switches windows first so the split
+-- window layout is preserved.
+
+-- TODO(chogan): Don't auto comment when hitting <CR> in a comment block
+-- TODO(chogan): Cursor isn't getting set properly in terminal (neovim issue #3681)
+
+-- TODO(chogan): Remap CTRL-X insert mode completion commands (:help ins-completion)
+-- 1. Whole lines						|i_CTRL-X_CTRL-L|
+-- 2. keywords in the current file				|i_CTRL-X_CTRL-N|
+-- 3. keywords in 'dictionary'				|i_CTRL-X_CTRL-K|
+-- 4. keywords in 'thesaurus', thesaurus-style		|i_CTRL-X_CTRL-T|
+-- 5. keywords in the current and included files		|i_CTRL-X_CTRL-I|
+-- 6. tags							|i_CTRL-X_CTRL-]|
+-- 7. file names						|i_CTRL-X_CTRL-F|
+-- 8. definitions or macros				|i_CTRL-X_CTRL-D|
+-- 9. Vim command-line					|i_CTRL-X_CTRL-V|
+-- 10. User defined completion				|i_CTRL-X_CTRL-U|
+-- 11. omni completion					|i_CTRL-X_CTRL-O|
+-- 12. Spelling suggestions				|i_CTRL-X_s|
+-- 13. keywords in 'complete'				|i_CTRL-N| |i_CTRL-P|
+
+-- TODO(chogan): Comma leader keys
+
+-- Misc. keys
+-- TODO(chogan): M-q (gq in visual selection mode)
+-- TODO(chogan): <C-h> not working in insert mode
+
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 vim.g.have_nerd_font = false
@@ -55,6 +82,7 @@ vim.keymap.set('n', '<leader>wd', '<cmd>close<CR>', { desc = 'Close a window' })
 vim.keymap.set('n', '<leader>bd', '<cmd>bd<CR>', { desc = '[D]elete this buffer' })
 vim.keymap.set('n', '<leader>bn', '<cmd>bnext<CR>', { desc = '[N]ext buffer' })
 vim.keymap.set('n', '<leader>bp', '<cmd>bprev<CR>', { desc = '[P]revious buffer' })
+vim.keymap.set('n', '<leader><Tab>', '<cmd>b#<CR>', { desc = 'Previous buffer'})
 
 local function cjh_get_z_cycle_incrementer()
   local index = 1
@@ -78,16 +106,23 @@ vim.keymap.set('n', '<leader>qq', '<cmd>qa<CR>', { desc = 'Quit nvim' })
 vim.keymap.set('n', '[<leader>', 'O<ESC>j', { desc = 'Insert blank line above' })
 vim.keymap.set('n', ']<leader>', 'o<ESC>k', { desc = 'Insert blank line below' })
 
+-- <leader>d
+vim.keymap.set('n', '<leader>dw', function() vim.cmd([[:%s/\s\+$//e]]) end,
+  { desc = 'Delete trailing whitespace' }
+)
+
 -- Errors
 -- <leader>en :cnext
 -- <leader>ep :cprevious
 
 -- Toggles
 local function cjh_toggle_line_number()
+  ---@diagnostic disable-next-line: undefined-field
   vim.opt.number = not(vim.opt.number:get())
 end
 
 local function cjh_toggle_relative_line_number()
+  ---@diagnostic disable-next-line: undefined-field
   vim.opt.relativenumber = not(vim.opt.relativenumber:get())
 end
 
@@ -95,6 +130,15 @@ vim.keymap.set('n', '<leader>tn', cjh_toggle_line_number, { desc = 'Toggle line 
 vim.keymap.set('n', '<leader>tr', cjh_toggle_relative_line_number,
   { desc = 'Toggle relative line numbers' }
 )
+local function cjh_get_or_open_terminal_buffer()
+  ---@diagnostic disable-next-line: undefined-field,unused-local,param-type-mismatch
+  local ok, error = pcall(vim.cmd, [[:b term://]])
+  if ok == false then
+    vim.cmd([[terminal]])
+  end
+end
+
+vim.keymap.set('n', '<leader>tt', cjh_get_or_open_terminal_buffer, { desc = '[T]erminal' })
 
 local cjh_build_command = './build.sh'
 local function cjh_request_build_command()
@@ -105,7 +149,7 @@ local function cjh_request_build_command()
   end
 end
 
--- TODO(chogan): Comma leader
+-- Comma leader
 vim.keymap.set('n', ',b', function() vim.cmd('!' .. cjh_build_command) end, { desc = '[B]uild' })
 -- vim.keymap.set('n', ',c', 'cjh-insert-if0-comment', { desc = '' })
 -- vim.keymap.set('n', ',fb', 'c-beginning-of-defun', { desc = '' })
@@ -123,10 +167,6 @@ vim.keymap.set('n', ',t', 'i-- TODO(chogan): ', { desc = 'Insert TODO' })
 vim.keymap.set('n', ',w', '<cmd>w<CR>', { desc = 'Save buffer' })
 -- vim.keymap.set('n', '<C-;>', 'cjh-insert-semicolon-at-eol', { desc = '' })
 --
-vim.keymap.set('i', 'C-l', '<ESC>li', { desc = '' })
-vim.keymap.set('i', 'C-h', '<ESC>hi', { desc = '' })
--- vim.keymap.set('i', 'C-;', 'cjh-insert-semicolon-at-eol', { desc = '' })
--- vim.keymap.set('i', 'C-.', 'cjh-init-struct', { desc = '' })
 
 -- Help
 local function cjh_help()
@@ -136,77 +176,50 @@ local function cjh_help()
   end
 end
 
-vim.api.nvim_create_user_command('CjhHelp', cjh_help, { nargs = 0 })
-vim.keymap.set('n', '<leader>h', '<cmd>CjhHelp<CR>', { desc = '[H]elp' })
+vim.keymap.set('n', '<leader>h', cjh_help, { desc = '[H]elp' })
 
--- local function cjh_get_term_buf()
---   local buffers = vim.api.nvim_list_bufs()
---   for _, b in ipairs(buffers) do
---     if vim.api.nvim_get_option_value('buftype', {buf = b}) == 'terminal' then
---       return vim.api.nvim_buf_get_name(b)
---     end
---   end
---   return nil
--- end
-
--- FIXME(chogan): Doesn't work when an old terminal is loaded from a session
-local function cjh_get_terminal_func()
-  local term = 'term://bash'
-  local edit = 'edit'
-  local currterm = nil
-  local function cjh_one_terminal(t)
-    if t and not currterm then currterm = t end
-
-    if currterm ~= nil then
-      if vim.fn.bufexists(currterm) == 1 then
-        vim.cmd(edit .. ' ' .. currterm)
-      else
-        currterm = nil
-        cjh_one_terminal()
-      end
-    else
-      vim.cmd(edit .. ' ' .. term)
-      currterm = vim.fn.bufname()
-    end
-  end
-
-  return cjh_one_terminal
-end
-
-local cjh_get_terminal = cjh_get_terminal_func()
-vim.keymap.set('n', '<leader>x', cjh_get_terminal, { desc = 'Open or find terminal window' })
-
-vim.keymap.set('n', '<leader><Tab>', '<cmd>b#<CR>', { desc = 'Previous buffer'})
-
-vim.api.nvim_create_autocmd('TermOpen', {
-  desc = 'Ensure cjh_get_terminal is called when opening a new terminal.',
-  callback = function()
-    local term = vim.fn.bufname()
-    cjh_get_terminal(term)
-  end,
-})
+-- Insert mode
+vim.keymap.set('i', '<M-BS>', '<C-W>', {desc = 'Delete word backwards'})
+vim.keymap.set('i', '<C-l>', '<Esc>li', { desc = 'Move right' })
+vim.keymap.set('i', '<C-h>', '<Esc>hi', { desc = 'Move left' })
+-- vim.keymap.set('i', '<C-;>', 'cjh-insert-semicolon-at-eol', { desc = '' })
+-- vim.keymap.set('i', '<C-.>', 'cjh-init-struct', { desc = '' })
 
 -- Command mode
-vim.keymap.set('c', '<C-j>', '<C-n>', { desc = 'Next entry'})
-vim.keymap.set('c', '<C-k>', '<C-p>', { desc = 'Previous entry'})
+vim.keymap.set('c', '<C-j>', '<C-n>', {desc = 'Next entry'})
+vim.keymap.set('c', '<C-k>', '<C-p>', {desc = 'Previous entry'})
+vim.keymap.set('c', '<M-BS>', '<C-W>', {desc = 'Delete word backwards'})
 
--- TODO(chogan): Remap CTRL-X insert mode completion commands (:help ins-completion)
--- 1. Whole lines						|i_CTRL-X_CTRL-L|
--- 2. keywords in the current file				|i_CTRL-X_CTRL-N|
--- 3. keywords in 'dictionary'				|i_CTRL-X_CTRL-K|
--- 4. keywords in 'thesaurus', thesaurus-style		|i_CTRL-X_CTRL-T|
--- 5. keywords in the current and included files		|i_CTRL-X_CTRL-I|
--- 6. tags							|i_CTRL-X_CTRL-]|
--- 7. file names						|i_CTRL-X_CTRL-F|
--- 8. definitions or macros				|i_CTRL-X_CTRL-D|
--- 9. Vim command-line					|i_CTRL-X_CTRL-V|
--- 10. User defined completion				|i_CTRL-X_CTRL-U|
--- 11. omni completion					|i_CTRL-X_CTRL-O|
--- 12. Spelling suggestions				|i_CTRL-X_s|
--- 13. keywords in 'complete'				|i_CTRL-N| |i_CTRL-P|
---
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
+
+local cjh_set_cursor_ibeam = 'set guicursor=a:ver25'
+-- local cjh_set_cursor_vim = 'set guicursor=n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20'
+
+vim.api.nvim_create_autocmd('VimLeave', {
+  pattern = '*',
+  command = cjh_set_cursor_ibeam,
+  desc = 'Restore terminal cursor to I-beam when leaving nvim',
+})
+
+-- TODO(chogan): Why don't these work?
+-- vim.api.nvim_create_autocmd('VimResume', {
+--   pattern = '*',
+--   command = cjh_set_cursor_vim,
+--   desc = 'Reset cursor to default settings',
+-- })
+
+-- vim.api.nvim_create_autocmd('TermEnter', {
+--   pattern = '*',
+--   command = cjh_set_cursor_ibeam,
+--   desc = 'Restore terminal cursor to I-beam',
+-- })
+--
+-- vim.api.nvim_create_autocmd('TermLeave', {
+--   pattern = '*',
+--   command = cjh_set_cursor_vim,
+--   desc = 'Restore terminal cursor to default',
+-- })
 
 -- Highlight when yanking (copying) text
 --  Try it with `yap` in normal mode
@@ -244,6 +257,8 @@ require('lazy').setup({
         topdelete = { text = '‾' },
         changedelete = { text = '~' },
       },
+
+      ---@diagnostic disable-next-line: unused-local
       on_attach = function(bufnr)
         -- if vim.api.nvim_buf_get_name(bufnr):match(<PATTERN>) then
         --   -- Don't attach to specific buffers whose name matches a pattern
@@ -355,8 +370,14 @@ require('lazy').setup({
         --
         defaults = {
           mappings = {
-            i = { ['<c-j>'] = 'move_selection_next',
-                  ['<c-k>'] = 'move_selection_previous'
+            i = {
+              ['<c-j>'] = 'move_selection_next',
+              ['<c-k>'] = 'move_selection_previous',
+            },
+            n = {
+              ['<Space>'] = require('telescope.actions').toggle_selection +
+                            require('telescope.actions').move_selection_next,
+              ['d'] = 'delete_buffer',
             },
           },
         },
@@ -375,15 +396,16 @@ require('lazy').setup({
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
       vim.keymap.set('n', '<leader>bb', builtin.buffers, { desc = '[S]earch [B]uffers' })
+      vim.keymap.set('n', '<leader>sc', builtin.command_history, {desc = '[S]earch [C]ommand history'})
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
-      vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = '[S]earch [F]iles', hide })
+      vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = '[S]earch [F]iles'})
       vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
       vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
-      vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
+      vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -516,7 +538,7 @@ require('lazy').setup({
           -- This may be unwanted, since they displace some of your code
           if client and client.server_capabilities.inlayHintProvider and vim.lsp.inlay_hint then
             map('<leader>th', function()
-              vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
+              vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({}))
             end, '[T]oggle Inlay [H]ints')
           end
         end,
@@ -847,7 +869,11 @@ require('lazy').setup({
       end
 
       -- Sessions
-      require('mini.sessions').setup { autoread = true }
+      require('mini.sessions').setup {
+        autoread = true,
+        file = '',
+        verbose = {read = true},
+      }
     end,
   },
 
@@ -927,6 +953,3 @@ require('lazy').setup({
     },
   },
 })
-
--- The line beneath this is called `modeline`. See `:help modeline`
--- vim: ts=2 sts=2 sw=2 et
