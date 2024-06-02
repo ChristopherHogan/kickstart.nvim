@@ -1,5 +1,5 @@
--- TODO(chogan): Add a hook to buffer delete that switches windows first so the split
--- window layout is preserved.
+-- TODO(chogan): Add a hook to buffer delete that switches windows first so the split window layout
+-- is preserved.
 
 -- TODO(chogan): Don't auto comment when hitting <CR> in a comment block
 -- TODO(chogan): Cursor isn't getting set properly in terminal (neovim issue #3681)
@@ -22,7 +22,6 @@
 -- TODO(chogan): Comma leader keys
 
 -- Misc. keys
--- TODO(chogan): M-q (gq in visual selection mode)
 -- TODO(chogan): <C-h> not working in insert mode
 
 vim.g.mapleader = ' '
@@ -53,6 +52,7 @@ vim.opt.inccommand = 'split'
 vim.opt.cursorline = true
 vim.opt.scrolloff = 10
 vim.opt.hlsearch = true
+vim.opt.textwidth = 100
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
@@ -178,17 +178,23 @@ end
 
 vim.keymap.set('n', '<leader>h', cjh_help, { desc = '[H]elp' })
 
+vim.keymap.set('n', '<M-;>', '<Esc>A;<Esc>', { desc = 'Add semicolon to end of line' })
+vim.keymap.set('n', '<M-.>', ' = {};<Esc>', { desc = 'Init empty struct' })
+
 -- Insert mode
 vim.keymap.set('i', '<M-BS>', '<C-W>', {desc = 'Delete word backwards'})
-vim.keymap.set('i', '<C-l>', '<Esc>li', { desc = 'Move right' })
-vim.keymap.set('i', '<C-h>', '<Esc>hi', { desc = 'Move left' })
--- vim.keymap.set('i', '<C-;>', 'cjh-insert-semicolon-at-eol', { desc = '' })
--- vim.keymap.set('i', '<C-.>', 'cjh-init-struct', { desc = '' })
+vim.keymap.set('i', '<M-l>', '<Esc>li', { desc = 'Move right' })
+vim.keymap.set('i', '<M-h>', '<Esc>i', { desc = 'Move left' })
+vim.keymap.set('i', '<M-;>', '<Esc>A;<Esc>', { desc = 'Add semicolon to end of line' })
+vim.keymap.set('i', '<M-.>', ' = {};<Esc>', { desc = 'Init empty struct' })
 
 -- Command mode
 vim.keymap.set('c', '<C-j>', '<C-n>', {desc = 'Next entry'})
 vim.keymap.set('c', '<C-k>', '<C-p>', {desc = 'Previous entry'})
 vim.keymap.set('c', '<M-BS>', '<C-W>', {desc = 'Delete word backwards'})
+
+-- Visual mode
+vim.keymap.set('v', '<M-q>', 'gw', {desc = 'Fill paragraph'})
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -748,16 +754,16 @@ require('lazy').setup({
           --
           -- <c-l> will move you to the right of each of the expansion locations.
           -- <c-h> is similar, except moving you backwards.
-          ['<C-l>'] = cmp.mapping(function()
-            if luasnip.expand_or_locally_jumpable() then
-              luasnip.expand_or_jump()
-            end
-          end, { 'i', 's' }),
-          ['<C-h>'] = cmp.mapping(function()
-            if luasnip.locally_jumpable(-1) then
-              luasnip.jump(-1)
-            end
-          end, { 'i', 's' }),
+          -- ['<C-l>'] = cmp.mapping(function()
+          --   if luasnip.expand_or_locally_jumpable() then
+          --     luasnip.expand_or_jump()
+          --   end
+          -- end, { 'i', 's' }),
+          -- ['<C-h>'] = cmp.mapping(function()
+          --   if luasnip.locally_jumpable(-1) then
+          --     luasnip.jump(-1)
+          --   end
+          -- end, { 'i', 's' }),
 
           -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
           --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -909,7 +915,6 @@ require('lazy').setup({
       --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
     end,
   },
-
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
   -- place them in the correct locations.
