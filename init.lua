@@ -1,7 +1,6 @@
 -- TODO(chogan): Add a hook to buffer delete that switches windows first so the split window layout
 -- is preserved.
-
--- TODO(chogan): Don't auto comment when hitting <CR> in a comment block
+-- TODO(chogan): Emacs compilation-mode experience
 -- TODO(chogan): Cursor isn't getting set properly in terminal (neovim issue #3681)
 
 -- TODO(chogan): Remap CTRL-X insert mode completion commands (:help ins-completion)
@@ -19,10 +18,13 @@
 -- 12. Spelling suggestions				|i_CTRL-X_s|
 -- 13. keywords in 'complete'				|i_CTRL-N| |i_CTRL-P|
 
--- TODO(chogan): Comma leader keys
+-- TODO(chogan): Find file other window
+-- TODO(chogan): Find buffer other window
+-- TODO(chogan): goto definition other window
 
--- Misc. keys
--- TODO(chogan): <C-h> not working in insert mode
+-- TODO(chogan): [[ and ]] to go to next/prev function definition
+
+-- TODO(chogan): Comma leader keys
 
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
@@ -53,6 +55,8 @@ vim.opt.cursorline = true
 vim.opt.scrolloff = 10
 vim.opt.hlsearch = true
 vim.opt.textwidth = 100
+vim.opt.expandtab = true
+vim.opt.shiftwidth = 2
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
@@ -162,7 +166,7 @@ vim.keymap.set('n', ',n', 'i-- NOTE(chogan): ', { desc = 'Insert NOTE' })
 -- vim.keymap.set('n', ',p', 'org-pomodoro', { desc = '' })
 vim.keymap.set('n', ',r', cjh_request_build_command, { desc = '[R]equest build command' })
 -- TODO(chogan): Make sure this auto indents
-vim.keymap.set('n', ',t', 'i-- TODO(chogan): ', { desc = 'Insert TODO' })
+vim.keymap.set('n', ',t', 'i-- TODO(chogan): <Esc>==A', { desc = 'Insert TODO' })
 -- vim.keymap.set('n', ',u', 'org-update-all-dblocks', { desc = '' })
 vim.keymap.set('n', ',w', '<cmd>w<CR>', { desc = 'Save buffer' })
 -- vim.keymap.set('n', '<C-;>', 'cjh-insert-semicolon-at-eol', { desc = '' })
@@ -183,7 +187,7 @@ vim.keymap.set('n', '<M-.>', ' = {};<Esc>', { desc = 'Init empty struct' })
 
 -- Insert mode
 vim.keymap.set('i', '<M-BS>', '<C-W>', {desc = 'Delete word backwards'})
-vim.keymap.set('i', '<M-l>', '<Esc>li', { desc = 'Move right' })
+vim.keymap.set('i', '<M-l>', '<Esc>lli', { desc = 'Move right' })
 vim.keymap.set('i', '<M-h>', '<Esc>i', { desc = 'Move left' })
 vim.keymap.set('i', '<M-;>', '<Esc>A;<Esc>', { desc = 'Add semicolon to end of line' })
 vim.keymap.set('i', '<M-.>', ' = {};<Esc>', { desc = 'Init empty struct' })
@@ -206,6 +210,17 @@ vim.api.nvim_create_autocmd('VimLeave', {
   pattern = '*',
   command = cjh_set_cursor_ibeam,
   desc = 'Restore terminal cursor to I-beam when leaving nvim',
+})
+
+-- Don't auto comment when hitting <CR>, o, or O in a comment block
+local format_options_group = vim.api.nvim_create_augroup("FormatOptions", { clear = true })
+vim.api.nvim_create_autocmd("BufEnter", {
+    group = format_options_group,
+    pattern = "*",
+    desc = "Set buffer local formatoptions.",
+    callback = function()
+        vim.opt_local.formatoptions:remove({"r", "o",})
+    end,
 })
 
 -- TODO(chogan): Why don't these work?
@@ -915,6 +930,23 @@ require('lazy').setup({
       --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
     end,
   },
+
+  -- {
+  --   "ej-shafran/compile-mode.nvim",
+  --   branch = "latest",
+  --   -- or a specific version:
+  --   -- tag = "v2.0.0"
+  --   dependencies = {
+  --     "nvim-lua/plenary.nvim",
+  --     { "m00qek/baleia.nvim", tag = "v1.3.0" },
+  --   },
+  --   opts = {
+  --     -- you can disable colors by uncommenting this line
+  --     -- no_baleia_support = true,
+  --     default_command = "./build.sh"
+  --   },
+  -- },
+
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
   -- place them in the correct locations.
